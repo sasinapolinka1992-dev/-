@@ -1,4 +1,3 @@
-
 import { Unit, Promotion, PromotionStatus, PromotionType, AnalyticsData, AdjustmentType } from '../types';
 
 const generateMockUnits = (): Unit[] => {
@@ -12,6 +11,12 @@ const generateMockUnits = (): Unit[] => {
       for (let uIdx = 1; uIdx <= unitsPerFloorPerSection; uIdx++) {
         const stackStr = uIdx.toString().padStart(2, '0');
         const unitId = `unit-${section}-${floor}-${stackStr}`;
+        const rand = Math.random();
+        let status: 'Продано' | 'Бронь' | 'Свободно' | 'Резерв' = 'Свободно';
+        if (rand > 0.95) status = 'Продано';
+        else if (rand > 0.9) status = 'Бронь';
+        else if (rand > 0.85) status = 'Резерв';
+        
         units.push({
           id: unitId,
           number: `${section}${floor}${stackStr}`,
@@ -19,7 +24,7 @@ const generateMockUnits = (): Unit[] => {
           rooms: (uIdx % 3) + 1,
           area: 35 + (uIdx % 4) * 15 + (floor % 2) * 5,
           price: 6000000 + floor * 200000 + uIdx * 500000,
-          status: Math.random() > 0.85 ? 'Продано' : Math.random() > 0.9 ? 'Бронь' : 'Свободно',
+          status: status,
           section: section,
           popularity: Math.floor(Math.random() * 100)
         });
@@ -47,7 +52,12 @@ const basePromos: Promotion[] = [
     unitIds: MOCK_UNITS.slice(0, 40).map(u => u.id),
     priority: 8,
     isStackable: false,
-    createdAt: '2023-12-15'
+    createdAt: '2023-12-15',
+    showOnDomclick: true,
+    auditLog: [
+      { id: '1', timestamp: '2024-03-25T14:30:00', user: 'Иванов Иван Иванович', action: 'Изменена дата завершения акции', changes: '0000-00-00 → 2026-01-13', source: 'Excel - таблица', processType: 'Автообновление' },
+      { id: '2', timestamp: '2024-03-26T10:15:00', user: 'Петров Сергей Александрович', action: 'Изменена цена за м.кв.', changes: '0 → 185 000', source: '/catalog/adm/zk/sheets/story/update.php', processType: 'Автообновление' }
+    ]
   },
   {
     id: 'p-2',
@@ -64,7 +74,11 @@ const basePromos: Promotion[] = [
     unitIds: MOCK_UNITS.slice(40, 60).map(u => u.id),
     priority: 5,
     isStackable: true,
-    createdAt: '2024-02-20'
+    createdAt: '2024-02-20',
+    showOnDomclick: false,
+    auditLog: [
+       { id: '101', timestamp: '2024-03-25T14:30:00', user: 'Иванов Иван', action: 'Изменена дата начала акции', changes: '0000-00-00 → 2026-01-13', source: 'Excel - таблица', processType: 'Автообновление' }
+    ]
   }
 ];
 
@@ -76,7 +90,11 @@ const extras = Array.from({ length: 15 }).map((_, i) => ({
   priority: (i % 10) + 1,
   unitIds: MOCK_UNITS.slice(100 + i * 5, 110 + i * 5).map(u => u.id),
   adjustmentValue: 5 + (i % 5),
-  adjustmentMode: 'Понижение' as const
+  adjustmentMode: 'Понижение' as const,
+  showOnDomclick: i % 3 !== 0,
+  auditLog: [
+    { id: `extra-log-${i}`, timestamp: '2024-04-01T12:00:00', user: 'Васильев Олег Петрович', action: 'Акция создана', changes: 'Создание', source: 'Панель управления', processType: 'Вручную' }
+  ]
 }));
 
 export const MOCK_PROMOTIONS: Promotion[] = [...basePromos, ...extras];
