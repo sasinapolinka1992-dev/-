@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useMemo } from 'react';
 import { Promotion, PromotionType, Unit, AdjustmentType } from '../types';
 import { COMMON_STYLES } from '../constants';
@@ -55,8 +54,8 @@ const MultiSelect = ({ label, options, selected = [], onChange }: { label: strin
 
 const PromotionForm: React.FC<PromotionFormProps> = ({ initialData, onSave, onCancel, openChessboard, selectedUnitsCount, units }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const defaultValues = useMemo(() => ({ name: '', description: '', promoLink: '', image: null, type: PromotionType.DISCOUNT, value: 5, startDate: new Date().toISOString().split('T')[0], endDate: '', priority: 5, isStackable: false, maxTotalDiscount: 15, projects: ['ЖК "Гранд Тауэрс"'], sections: ['1', '2', '3'], unitTypes: ['Квартиры'], rooms: ['Студия', '1-к', '2-к', '3-к', '4-к'], areaMin: '', areaMax: '', statuses: ['Свободно'], priceDirection: 'down', costType: AdjustmentType.COST_PERCENT, displayOnDomclick: false }), []);
-  const [formData, setFormData] = useState<any>(() => ({ ...defaultValues, ...initialData, promoLink: initialData?.link || '' }));
+  const defaultValues = useMemo(() => ({ name: '', description: '', promoLink: '', image: null, type: PromotionType.DISCOUNT, value: 5, startDate: new Date().toISOString().split('T')[0], endDate: '', priority: 5, isStackable: false, maxTotalDiscount: 15, projects: ['ЖК "Гранд Тауэрс"'], sections: ['1', '2', '3'], unitTypes: ['Квартиры'], rooms: ['Студия', '1-к', '2-к', '3-к', '4-к'], areaMin: '', areaMax: '', statuses: ['Свободно'], priceDirection: 'down', costType: AdjustmentType.COST_PERCENT, displayOnDomclick: true }), []);
+  const [formData, setFormData] = useState<any>(() => ({ ...defaultValues, ...initialData, promoLink: initialData?.link || '', displayOnDomclick: initialData?.showOnDomclick ?? true }));
 
   const matchingUnitsCount = useMemo(() => {
     return units.filter(unit => {
@@ -89,7 +88,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ initialData, onSave, onCa
   const sectionOptions = ['1', '2', '3'];
   const unitTypeOptions = ['Квартиры', 'Апартаменты', 'Коммерция', 'Машиноместа', 'Кладовые'];
   const roomOptions = ['Студия', '1-к', '2-к', '3-к', '4-к'];
-  const statusOptions = ['Свободно', 'Бронь', 'Продано'];
+  const statusOptions = ['Свободно', 'Бронь', 'Продано', 'Резерв'];
 
   return (
     <div className="p-8 flex flex-col h-full bg-white">
@@ -120,11 +119,14 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ initialData, onSave, onCa
           <div className="space-y-2">
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Баннер акции</label>
             {!formData.image ? (
-              <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-slate-200 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-[#6699CC] hover:bg-blue-50/50 transition-all group">
-                <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300 group-hover:text-[#6699CC] group-hover:scale-110 transition-all">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+              <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-[#6699CC] hover:bg-blue-50/50 transition-all group">
+                <div className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300 group-hover:text-[#6699CC] transition-all">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                 </div>
-                <p className="text-[13px] font-bold text-slate-400">Перетащите или кликните</p>
+                <div className="text-center">
+                  <p className="text-[12px] font-bold text-slate-400">Перетащите или кликните</p>
+                  <p className="text-[10px] text-slate-400 opacity-60 mt-1">Допустимый формат изображений JPG и PNG, размер не более 2 МБ, 520*300 рх.</p>
+                </div>
                 <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
               </div>
             ) : (
@@ -188,7 +190,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ initialData, onSave, onCa
               <option value={PromotionType.DISCOUNT}>Скидка %</option>
               <option value={PromotionType.GIFT}>Подарок за покупку</option>
               <option value={PromotionType.M2_GIFT}>м² в подарок</option>
-              <option value={PromotionType.FLAT_MONTH}>Квартира месяца</option>
+              <option value={PromotionType.FLAT_MONTH} title="Не будет отображаться на Домклик">Квартира месяца</option>
             </select>
             <p className="text-[11px] text-slate-400 mt-1 px-1">чтобы добавить новый тип акции, напишите нам в чат @plan7_bot</p>
           </div>
@@ -240,8 +242,16 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ initialData, onSave, onCa
           <div className="space-y-4 border border-slate-200 p-6 rounded-2xl">
             <div className="flex flex-col gap-2">
               <div className="flex justify-between items-center">
-                <label className="text-[9px] font-black text-black uppercase tracking-wider px-1">Приоритет: {formData.priority}</label>
-                <input type="range" min="1" max="10" name="priority" value={formData.priority || 5} onChange={handleChange} className="w-1/2" />
+                <label className="text-[10px] font-black text-black uppercase tracking-wider px-1">Приоритет</label>
+                <input 
+                  type="number" 
+                  min="1" 
+                  max="10" 
+                  name="priority" 
+                  value={formData.priority || 5} 
+                  onChange={handleChange} 
+                  className={`${COMMON_STYLES.INPUT} w-24 text-center font-bold`} 
+                />
               </div>
               <p className="text-[9px] text-slate-500 italic leading-relaxed px-1">
                 Если на помещение действует несколько акций, то та, у которой выше приоритет будет отображаться в шахматке в первую очередь.
@@ -259,9 +269,9 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ initialData, onSave, onCa
         </div>
       </div>
 
-      <div className="mt-10 pt-6 border-t border-slate-100 flex justify-between items-center">
-        <span className="text-sm font-bold text-slate-400">Итого помещений:</span>
-        <span className="text-2xl font-black text-[#6699CC]">
+      <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center shrink-0 pb-1">
+        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Итого помещений:</span>
+        <span className="text-xl font-black text-[#6699CC]">
           {selectedUnitsCount || matchingUnitsCount}
         </span>
       </div>
