@@ -15,7 +15,6 @@ const Chessboard: React.FC<ChessboardProps> = ({ units, selectedIds, onToggleUni
   const [currentProject, setCurrentProject] = useState('ЖК "Гранд Тауэрс"');
   const [isHeatmapMode, setIsHeatmapMode] = useState(false);
   
-  // Selection box state
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectionBox, setSelectionBox] = useState<{ x: number, y: number, w: number, h: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -135,7 +134,6 @@ const Chessboard: React.FC<ChessboardProps> = ({ units, selectedIds, onToggleUni
 
   return (
     <div className="bg-white flex flex-col flex-1 min-h-0 overflow-hidden select-none px-8 pb-4">
-      {/* Controls Bar */}
       <div className="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shrink-0 mt-2">
         <div className="flex items-center gap-6">
           <div className="space-y-2">
@@ -160,15 +158,16 @@ const Chessboard: React.FC<ChessboardProps> = ({ units, selectedIds, onToggleUni
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.5-7 3 3 3 6 1 9 2-2 5-2 5-2z"></path></svg>
             Тепловая карта
           </button>
-          <div className="flex gap-6 text-[11px] text-slate-500 font-bold bg-slate-50/80 px-5 py-3 rounded-xl border border-slate-100">
-            <div className="flex items-center gap-2"><div className="w-3.5 h-3.5 border border-slate-200 bg-white rounded-md shadow-sm"></div> Свободно</div>
-            <div className="flex items-center gap-2"><div className="w-3.5 h-3.5 bg-[#6699CC] rounded-md shadow-md shadow-[#6699CC]/20"></div> Выбрано</div>
-            <div className="flex items-center gap-2"><div className="w-3.5 h-3.5 bg-slate-100 border border-slate-200 rounded-md"></div> Продано</div>
+          <div className="flex gap-4 text-[10px] text-slate-500 font-bold bg-slate-50/80 px-4 py-3 rounded-xl border border-slate-100">
+            <div className="flex items-center gap-1.5"><div className="w-3 h-3 border border-slate-200 bg-white rounded-md shadow-sm"></div> Свободно</div>
+            <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-[#6699CC] rounded-md shadow-md shadow-[#6699CC]/20"></div> Выбрано</div>
+            <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-indigo-100 border border-indigo-200 rounded-md"></div> Резерв</div>
+            <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-amber-100 border border-amber-200 rounded-md"></div> Бронь</div>
+            <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-slate-100 border border-slate-200 rounded-md"></div> Продано</div>
           </div>
         </div>
       </div>
 
-      {/* Main Grid Container */}
       <div 
         ref={containerRef}
         onMouseDown={handleMouseDown}
@@ -185,19 +184,16 @@ const Chessboard: React.FC<ChessboardProps> = ({ units, selectedIds, onToggleUni
         )}
 
         <div className="min-w-max flex flex-col">
-          {/* Sticky Header Row */}
           <div className="flex sticky top-0 z-30 bg-[#FBFDFF] border-b border-slate-100 shadow-sm">
-            {/* Corner Cell (Floor label space) */}
             <div className="w-20 shrink-0 bg-[#FBFDFF] sticky left-0 z-40"></div>
-            
             {sections.map(section => (
-              <div key={section} className="flex flex-col border-r border-slate-100 last:border-0 px-6 py-4 bg-[#FBFDFF]">
+              <div key={section} className="flex flex-col border-r border-slate-100 last:border-0 px-8 py-4 bg-[#FBFDFF]">
                 <div className="text-center font-bold text-[#6699CC] text-[10px] uppercase mb-4 tracking-[0.2em]">Секция {section}</div>
                 <div className="flex gap-2"> 
                   <div className="w-6 shrink-0"></div>
                   {stackKeys.map(stack => (
                     <div key={stack} className="flex flex-col items-center w-14 gap-2">
-                       <span className="text-[10px] font-bold text-slate-400">{stack}</span>
+                       <span className="text-[10px] font-bold text-slate-400 block text-center w-full">{stack}</span>
                        <button 
                          onClick={() => handleSelectStackInSection(section, stack)}
                          className="w-4 h-4 rounded-full bg-white border-2 border-slate-200 flex items-center justify-center hover:border-[#6699CC] transition-all shadow-sm group"
@@ -211,18 +207,16 @@ const Chessboard: React.FC<ChessboardProps> = ({ units, selectedIds, onToggleUni
             ))}
           </div>
 
-          {/* Grid Rows */}
           <div className="flex flex-col p-8 pt-4">
             {floors.map(floor => (
               <div key={floor} className="flex items-center mb-2 group">
-                {/* Floor Label - Sticky Left */}
                 <div className="w-20 shrink-0 flex items-center justify-end pr-4 gap-2 sticky left-0 z-10 bg-inherit group-hover:bg-white/80 transition-colors">
                   <span className="font-bold text-slate-400 text-[11px] w-6 text-right whitespace-nowrap">{floor} эт.</span>
                 </div>
                 
                 <div className="flex h-14">
                   {sections.map(section => (
-                    <div key={section} className="flex items-center gap-2 border-r border-slate-100 last:border-0 px-6">
+                    <div key={section} className="flex items-center gap-2 border-r border-slate-100 last:border-0 px-8">
                       <div className="w-6 shrink-0 flex items-center justify-center">
                          <button 
                            onClick={() => handleSelectFloorInSection(section, floor)}
@@ -236,14 +230,20 @@ const Chessboard: React.FC<ChessboardProps> = ({ units, selectedIds, onToggleUni
                         if (!unit) return <div key={stack} className="w-14 h-14"></div>;
                         const isSelected = selectedIds.includes(unit.id);
                         const isUnavailable = unit.status !== 'Свободно';
-                        const heatmapClass = isHeatmapMode ? getHeatmapColor(unit.popularity) : '';
+                        
+                        let statusColorClass = 'bg-white border-slate-100 text-slate-700 hover:border-[#6699CC]';
+                        if (unit.status === 'Продано') statusColorClass = 'bg-slate-100 cursor-not-allowed border-slate-200 text-slate-300';
+                        if (unit.status === 'Бронь') statusColorClass = 'bg-amber-100 cursor-not-allowed border-amber-200 text-amber-500';
+                        if (unit.status === 'Резерв') statusColorClass = 'bg-indigo-100 cursor-not-allowed border-indigo-200 text-indigo-500';
+                        
+                        const heatmapClass = isHeatmapMode && !isUnavailable ? getHeatmapColor(unit.popularity) : '';
                         
                         return (
                           <button 
                             key={unit.id} 
                             data-unit-id={unit.id}
                             onClick={() => !isUnavailable && onToggleUnit(unit.id)} 
-                            className={`w-14 h-14 flex flex-col items-center justify-center border transition-all rounded-xl shadow-sm ${isUnavailable ? 'bg-slate-100 cursor-not-allowed border-slate-200 text-slate-300' : isSelected ? 'bg-[#6699CC] border-[#5577BB] text-white shadow-lg shadow-[#6699CC]/30 ring-2 ring-white ring-inset scale-[0.96]' : heatmapClass || 'bg-white border-slate-100 hover:border-[#6699CC] text-slate-700 hover:shadow-md hover:translate-y-[-1px] active:translate-y-0'}`} 
+                            className={`w-14 h-14 flex flex-col items-center justify-center border transition-all rounded-xl shadow-sm ${isSelected ? 'bg-[#6699CC] border-[#5577BB] text-white shadow-lg shadow-[#6699CC]/30 ring-2 ring-white ring-inset scale-[0.96]' : heatmapClass || statusColorClass + ' hover:shadow-md hover:translate-y-[-1px] active:translate-y-0'}`} 
                           >
                             <span className="text-[11px] leading-tight font-extrabold">{unit.number}</span>
                             <span className="text-[9px] font-medium opacity-60 mt-0.5">{unit.area}м²</span>
