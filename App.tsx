@@ -144,8 +144,8 @@ const App: React.FC = () => {
 
   const filteredPromotions = useMemo(() => {
     let result = [...promotions];
-    if (regStatus === 'Активные') result = result.filter(p => p.status === PromotionStatus.ACTIVE);
-    else if (regStatus === 'Деактивированы') result = result.filter(p => p.status !== PromotionStatus.ACTIVE);
+    if (regStatus === 'Включены') result = result.filter(p => p.status === PromotionStatus.ACTIVE);
+    else if (regStatus === 'Выключены') result = result.filter(p => p.status !== PromotionStatus.ACTIVE);
     if (regDateCreated) result = result.filter(p => p.createdAt === regDateCreated);
     if (regNames.length > 0) result = result.filter(p => regNames.includes(p.name));
     if (regPeriodFrom) result = result.filter(p => p.startDate >= regPeriodFrom);
@@ -371,8 +371,8 @@ const App: React.FC = () => {
                     <FilterItem label="Статус">
                       <select value={regStatus} onChange={(e) => setRegStatus(e.target.value)} className={COMMON_STYLES.INPUT}>
                         <option value="">Все</option>
-                        <option value="Активные">Активные</option>
-                        <option value="Деактивированы">Деактивированы</option>
+                        <option value="Включены">Включены</option>
+                        <option value="Выключены">Выключены</option>
                       </select>
                     </FilterItem>
                     <FilterItem label="Период">
