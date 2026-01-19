@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback } from 'react';
 import { Promotion, PromotionStatus, Unit, PromotionType, AdjustmentType } from './types';
 import { COMMON_STYLES } from './constants';
@@ -14,6 +13,61 @@ const formatDate = (dateStr: string) => {
   const parts = dateStr.split('-');
   if (parts.length !== 3) return dateStr;
   return `${parts[2]}.${parts[1]}.${parts[0]}`;
+};
+
+const calculatePriceWithPromo = (unitPrice: number, promo: Promotion) => {
+  let finalPrice = unitPrice;
+  const value = promo.adjustmentValue;
+  const isDown = promo.adjustmentMode === 'Понижение';
+  
+  if (promo.adjustmentType === AdjustmentType.COST_PERCENT || promo.type === PromotionType.DISCOUNT) {
+    finalPrice = isDown ? unitPrice * (1 - value / 100) : unitPrice * (1 + value / 100);
+  } else if (promo.adjustmentType === AdjustmentType.FIXED_COST) {
+    finalPrice = isDown ? unitPrice - value : unitPrice + value;
+  } else {
+    // Fallback for others
+    finalPrice = isDown ? unitPrice * 0.95 : unitPrice;
+  }
+  return Math.round(finalPrice);
+};
+
+const MultiSelectFilter = ({ label, options, selected = [], onChange }: { label: string, options: string[], selected: string[], onChange: (vals: string[]) => void }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="relative flex flex-col gap-1.5 min-w-0">
+      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1 truncate">{label}</label>
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        className={`${COMMON_STYLES.INPUT} flex items-center justify-between cursor-pointer hover:border-[#6699CC] transition-all`}
+      >
+        <span className="truncate text-[12px] font-medium">
+          {selected.length === 0 ? 'Все' : selected.join(', ')}
+        </span>
+        <svg className={`w-3 h-3 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+      </div>
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-[60]" onClick={() => setIsOpen(false)}></div>
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-[70] py-1 max-h-60 overflow-y-auto custom-scrollbar">
+            {options.map(opt => (
+              <label key={opt} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-[12px] font-medium text-slate-600">
+                <input 
+                  type="checkbox" 
+                  checked={selected.includes(opt)}
+                  onChange={() => {
+                    const next = selected.includes(opt) ? selected.filter(s => s !== opt) : [...selected, opt];
+                    onChange(next);
+                  }}
+                  className="w-3.5 h-3.5 rounded border-slate-300 text-[#6699CC]"
+                />
+                {opt}
+              </label>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
 };
 
 const Toggle = ({ checked, onChange }: { checked: boolean, onChange: () => void }) => (
@@ -74,11 +128,11 @@ const App: React.FC = () => {
 
   const [regStatus, setRegStatus] = useState('');
   const [regDateCreated, setRegDateCreated] = useState('');
-  const [regName, setRegName] = useState('');
+  const [regNames, setRegNames] = useState<string[]>([]);
   const [regPeriodFrom, setRegPeriodFrom] = useState('');
   const [regPeriodTo, setRegPeriodTo] = useState('');
-  const [regProject, setRegProject] = useState('');
-  const [regType, setRegType] = useState('');
+  const [regProjects, setRegProjects] = useState<string[]>([]);
+  const [regTypes, setRegTypes] = useState<string[]>([]);
   const [regPriority, setRegPriority] = useState('');
 
   const [bulkStartDate, setBulkStartDate] = useState('');
@@ -93,11 +147,11 @@ const App: React.FC = () => {
     if (regStatus === 'Активные') result = result.filter(p => p.status === PromotionStatus.ACTIVE);
     else if (regStatus === 'Деактивированы') result = result.filter(p => p.status !== PromotionStatus.ACTIVE);
     if (regDateCreated) result = result.filter(p => p.createdAt === regDateCreated);
-    if (regName) result = result.filter(p => p.name === regName);
+    if (regNames.length > 0) result = result.filter(p => regNames.includes(p.name));
     if (regPeriodFrom) result = result.filter(p => p.startDate >= regPeriodFrom);
     if (regPeriodTo) result = result.filter(p => p.endDate && p.endDate <= regPeriodTo);
-    if (regProject) result = result.filter(p => p.project === regProject);
-    if (regType) result = result.filter(p => p.type === regType);
+    if (regProjects.length > 0) result = result.filter(p => regProjects.includes(p.project));
+    if (regTypes.length > 0) result = result.filter(p => regTypes.includes(p.type));
     if (regPriority) result = result.filter(p => p.priority === parseInt(regPriority));
     
     result.sort((a, b) => {
@@ -114,7 +168,7 @@ const App: React.FC = () => {
       return 0;
     });
     return result;
-  }, [promotions, regStatus, regDateCreated, regName, regPeriodFrom, regPeriodTo, regProject, regType, regPriority, sortKey, sortOrder]);
+  }, [promotions, regStatus, regDateCreated, regNames, regPeriodFrom, regPeriodTo, regProjects, regTypes, regPriority, sortKey, sortOrder]);
 
   const addNotification = useCallback((message: string, type: 'error' | 'success' = 'success') => {
     const id = Math.random().toString(36).substr(2, 9);
@@ -191,7 +245,6 @@ const App: React.FC = () => {
       showOnDomclick: data.displayOnDomclick
     };
     if (data.id && promotions.find(p => p.id === data.id)) {
-      // FIX: Use data.id instead of non-existent variable 'id'
       setPromotions(prev => prev.map(p => data.id === p.id ? newPromo : p));
       addNotification("Изменения сохранены");
     } else {
@@ -206,14 +259,14 @@ const App: React.FC = () => {
     const promo = promotions.find(p => p.id === id);
     if (!promo) return;
     const willBeActive = promo.status !== PromotionStatus.ACTIVE;
-    const notifyMessage = willBeActive ? "Акция активирована" : "Акция деактивирована";
+    const notifyMessage = willBeActive ? "Акция включена" : "Акция выключена";
     setPromotions(prev => prev.map(p => id === p.id ? { ...p, status: willBeActive ? PromotionStatus.ACTIVE : PromotionStatus.ARCHIVED } : p));
     addNotification(notifyMessage);
   };
 
   const handleResetFilters = () => {
-    setRegStatus(''); setRegDateCreated(''); setRegName(''); setRegPeriodFrom('');
-    setRegPeriodTo(''); setRegProject(''); setRegType(''); setRegPriority('');
+    setRegStatus(''); setRegDateCreated(''); setRegNames([]); setRegPeriodFrom('');
+    setRegPeriodTo(''); setRegProjects([]); setRegTypes([]); setRegPriority('');
   };
 
   const handleSort = (key: any) => {
@@ -332,26 +385,11 @@ const App: React.FC = () => {
                     <FilterItem label="Дата создания">
                       <input type="date" value={regDateCreated} onChange={(e) => setRegDateCreated(e.target.value)} className={COMMON_STYLES.INPUT} />
                     </FilterItem>
-                    <FilterItem label="Акция">
-                      <select value={regName} onChange={(e) => setRegName(e.target.value)} className={COMMON_STYLES.INPUT}>
-                        <option value="">Все</option>
-                        {promoNames.map(name => <option key={name} value={name}>{name}</option>)}
-                      </select>
-                    </FilterItem>
-                    <FilterItem label="Проект">
-                      <select value={regProject} onChange={(e) => setRegProject(e.target.value)} className={COMMON_STYLES.INPUT}>
-                        <option value="">Все объекты</option>
-                        {projects.map(p => <option key={p} value={p}>{p}</option>)}
-                      </select>
-                    </FilterItem>
+                    <MultiSelectFilter label="Акция" options={promoNames} selected={regNames} onChange={setRegNames} />
+                    <MultiSelectFilter label="Проект" options={projects} selected={regProjects} onChange={setRegProjects} />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5 items-end">
-                    <FilterItem label="Тип акции">
-                      <select value={regType} onChange={(e) => setRegType(e.target.value)} className={COMMON_STYLES.INPUT}>
-                        <option value="">Все типы</option>
-                        {Object.values(PromotionType).map(t => <option key={t} value={t}>{t}</option>)}
-                      </select>
-                    </FilterItem>
+                    <MultiSelectFilter label="Тип акции" options={Object.values(PromotionType)} selected={regTypes} onChange={setRegTypes} />
                     <FilterItem label="Приоритет">
                       <select value={regPriority} onChange={(e) => setRegPriority(e.target.value)} className={COMMON_STYLES.INPUT}>
                         <option value="">Все</option>
@@ -459,6 +497,15 @@ const App: React.FC = () => {
                         </tr>
                       ))}
                     </tbody>
+                    <tfoot className="bg-slate-50 font-bold border-t-2 border-slate-200">
+                      <tr>
+                        <td colSpan={3} className="px-6 py-4 text-[12px] uppercase text-slate-400 tracking-wider">Итого</td>
+                        <td colSpan={6} className="px-6 py-4 text-slate-700 text-[13px]">
+                           Всего акций: <span className="text-[#6699CC] mr-4">{filteredPromotions.length}</span>
+                           Включено: <span className="text-emerald-500">{filteredPromotions.filter(p => p.status === PromotionStatus.ACTIVE).length}</span>
+                        </td>
+                      </tr>
+                    </tfoot>
                   </table>
                 </div>
               </div>
@@ -472,15 +519,18 @@ const App: React.FC = () => {
       {isUnitListModalOpen && unitListPromo && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-fade-in">
            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsUnitListModalOpen(false)}></div>
-           <div className="relative bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full max-h-[80vh] flex flex-col">
+           <div className="relative bg-white rounded-2xl shadow-2xl p-8 max-w-4xl w-full max-h-[80vh] flex flex-col">
               <h3 className="text-xl font-bold mb-4 text-slate-900">Помещения в акции: {unitListPromo.name}</h3>
               <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
                 <table className="w-full text-left">
                   <thead className="sticky top-0 bg-white">
                     <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
                       <th className="py-3">Номер</th>
+                      <th className="py-3">Секция</th>
                       <th className="py-3">Этаж</th>
                       <th className="py-3">Площадь</th>
+                      <th className="py-3">Стоимость без акции</th>
+                      <th className="py-3">Стоимость по акции</th>
                       <th className="py-3 text-right">Статус</th>
                     </tr>
                   </thead>
@@ -488,8 +538,11 @@ const App: React.FC = () => {
                     {units.filter(u => unitListPromo.unitIds.includes(u.id)).map(u => (
                       <tr key={u.id} className="text-[13px] hover:bg-slate-50">
                         <td className="py-3 font-bold">{u.number}</td>
+                        <td className="py-3 text-slate-500">{u.section}</td>
                         <td className="py-3">{u.floor}</td>
                         <td className="py-3">{u.area} м²</td>
+                        <td className="py-3 text-slate-400 line-through">{u.price.toLocaleString()} ₽</td>
+                        <td className="py-3 font-bold text-[#6699CC]">{calculatePriceWithPromo(u.price, unitListPromo as Promotion).toLocaleString()} ₽</td>
                         <td className="py-3 text-right">
                           <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] uppercase ${
                             u.status === 'Свободно' ? 'bg-emerald-50 text-emerald-600' :
